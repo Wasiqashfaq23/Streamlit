@@ -7,12 +7,11 @@ N8N_WEBHOOK_URL = "https://hello12345.app.n8n.cloud/webhook/task-event"
 
 def trigger_n8n(task):
     """Send task to n8n webhook and return calendar event ID if created"""
-    payload = {"task": task}  # Always wrap in task object
+    payload = {"task": task}
     try:
         response = requests.post(N8N_WEBHOOK_URL, json=payload, timeout=10)
         if response.ok:
             data = response.json()
-            # Check if calendar event was created
             if data.get("success") and "calendarEventId" in data:
                 return data["calendarEventId"]
             return None
@@ -236,9 +235,8 @@ with tab2:
                     undone_task = st.session_state.completed.pop()
 
                     if undone_task:
-                        undone_task.pop("completed_at", None)      # remove completion flag first
-                        undone_task["calendarEventId"] = None      # force calendar to re-create on undo
-
+                        undone_task.pop("completed_at", None)      
+                        undone_task["calendarEventId"] = None      
                         calendar_id = trigger_n8n(undone_task)
                         undone_task["calendarEventId"] = calendar_id if calendar_id else None
                         st.session_state.pending.insert(undone_task)

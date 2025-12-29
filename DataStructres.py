@@ -24,7 +24,7 @@ class PriorityQueue:
 
         min_task = self.heap[0]
         self.heap[0] = self.heap.pop()
-        self.heapify_down(0)
+        self.heapifyDown(0)
         return min_task
 
     def peek(self):

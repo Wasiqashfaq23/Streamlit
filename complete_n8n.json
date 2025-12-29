@@ -1,0 +1,447 @@
+{
+  "name": "Task Event Handler with Webhook Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "task-event",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "5a896d93-5a72-4d6a-8448-f1070a29a185",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        6064,
+        2464
+      ],
+      "webhookId": "5cf9025d-4e57-4228-afc5-2e704d062323",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.body.task.calendarEventId }}",
+              "operator": {
+                "type": "object",
+                "operation": "notExists"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "ef6dc1c0-3656-4d01-9cda-6cf0502e6552",
+      "name": "Check If Task Should Be Created",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        6288,
+        2560
+      ]
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "242230@students.au.edu.pk",
+          "mode": "id"
+        },
+        "start": "={{ $json.body.task.deadline }}",
+        "end": "={{ $json.body.task.deadline }}",
+        "additionalFields": {
+          "description": "={{ 'Priority: ' + $json.body.task.priority + ' | Created: ' + $json.body.task.timestamp }}",
+          "sendUpdates": "none",
+          "summary": "={{ $json.body.task.name }}"
+        }
+      },
+      "id": "a9f66fec-a418-47ff-aef4-035d5a2743c6",
+      "name": "Create Calendar Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        6512,
+        2560
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "wIO5ARuf8vUClCDA",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.body.task.calendarEventId }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            },
+            {
+              "id": "id-3",
+              "leftValue": "={{ $json.body.task.deadline }}",
+              "rightValue": "={{ $now }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "before"
+              }
+            },
+            {
+              "id": "id-4",
+              "leftValue": "={{ $json.body.task.completed_at }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "26124f09-cefe-4d5b-91d9-d78453d636dd",
+      "name": "Check If Should Delete",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        6288,
+        2368
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "242230@students.au.edu.pk",
+          "mode": "id"
+        },
+        "eventId": "={{ $json.body.task?.calendarEventId || $json.id }}",
+        "options": {}
+      },
+      "id": "ab3ca148-3bd0-4a51-bf6d-213e80d1f6ac",
+      "name": "Delete Calendar Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        6512,
+        2272
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "wIO5ARuf8vUClCDA",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "id": "a197fffc-2c3c-4cba-8022-2f7638741de7",
+      "name": "Cron - Auto Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        5840,
+        2176
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "id-2",
+              "name": "calendarEventId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "message",
+              "value": "Calendar event created successfully",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "33efa5ff-d6fa-4d08-8e9a-dc234b38843f",
+      "name": "Return Calendar Event ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        6736,
+        2560
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "242230@students.au.edu.pk"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "2a82b01e-5cde-467f-a34e-b46584b1ff1a",
+      "name": "Get All Calendar Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        6064,
+        2176
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "wIO5ARuf8vUClCDA",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ DateTime.fromISO($json.end.dateTime || $json.end.date).toMillis() }}",
+              "rightValue": "={{ $now.toMillis() }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "af8cf00c-2186-4840-9ef2-0d6940aaaad8",
+      "name": "Filter Expired Tasks",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        6288,
+        2176
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "id-2",
+              "name": "message",
+              "value": "Calendar event deleted successfully",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c05d0a2f-5f03-4635-8bcd-c0abe0200722",
+      "name": "Return Delete Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        6736,
+        2272
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "2c2f3697-1931-4dee-bfea-a4f43bbff2a1",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        6960,
+        2368
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check If Task Should Be Created",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check If Should Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Task Should Be Created": {
+      "main": [
+        [
+          {
+            "node": "Create Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Should Delete": {
+      "main": [
+        [
+          {
+            "node": "Delete Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron - Auto Check": {
+      "main": [
+        [
+          {
+            "node": "Get All Calendar Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Calendar Event": {
+      "main": [
+        [
+          {
+            "node": "Return Calendar Event ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Calendar Events": {
+      "main": [
+        [
+          {
+            "node": "Filter Expired Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Expired Tasks": {
+      "main": [
+        [
+          {
+            "node": "Delete Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Calendar Event": {
+      "main": [
+        [
+          {
+            "node": "Return Delete Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Delete Success": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Calendar Event ID": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "6c208173-4be8-4032-9bb7-82d2b3a2fe5c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "52bdb4f5fc8932821a7e0e5fad636d47982e3dd0585e512e965f54b053efc357"
+  },
+  "id": "Yuq6cQJ8Fm5FRuIz",
+  "tags": []
+}
